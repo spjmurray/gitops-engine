@@ -29,6 +29,9 @@ const (
 	SyncOptionReplace = "Replace=true"
 	// Sync option that enables use of --server-side flag instead of client-side
 	SyncOptionServerSideApply = "ServerSideApply=true"
+	// Sync option that ignores owner references when the underlying app adds them
+	// to resources extraneously
+	SyncOptionIgnoreOwnerReferences = "IgnoreOwnerReferences=true"
 )
 
 type PermissionValidator func(un *unstructured.Unstructured, res *metav1.APIResource) error

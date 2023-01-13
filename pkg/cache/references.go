@@ -10,6 +10,8 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/types"
 
+	"github.com/argoproj/gitops-engine/pkg/sync/common"
+	"github.com/argoproj/gitops-engine/pkg/sync/resource"
 	"github.com/argoproj/gitops-engine/pkg/utils/kube"
 )
 
@@ -19,6 +21,15 @@ func mightHaveInferredOwner(r *Resource) bool {
 }
 
 func (c *clusterCache) resolveResourceReferences(un *unstructured.Unstructured) ([]metav1.OwnerReference, func(kube.ResourceKey) bool) {
+	// An application may add owner references to resources that are managed by Helm or
+	// similar.  Those references will erroneously keep the resource alive as it looks
+	// like it's implicitly created by the parent.  By adding this annotation to the
+	// resource it's possible to opt out of this behaviour and actually allow deletion
+	// as intended.
+	if resource.HasAnnotationOption(un, common.AnnotationSyncOptions, common.SyncOptionIgnoreOwnerReferences) {
+		return nil, func(_ kube.ResourceKey) bool { return false }
+	}
+
 	var isInferredParentOf func(_ kube.ResourceKey) bool
 	ownerRefs := un.GetOwnerReferences()
 	gvk := un.GroupVersionKind()
